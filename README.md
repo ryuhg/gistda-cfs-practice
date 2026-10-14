@@ -1,3 +1,42 @@
+# cFS Hands-on Practice (GISTDA training fork)
+
+This repository is a training fork of the NASA [cFS bundle](https://github.com/nasa/cFS) at release **Aquila (cFS 6.7.0a)**. It is used for the hands-on exercises of a cFS introductory course. Aquila was chosen over later releases (Caelum, Draco) because its configuration is simpler for first-time users.
+
+Apart from this section, the repository is the same as the upstream tag `v6.7.0a`. The components (cFE, OSAL, PSP, the lab apps and the tools) are git submodules that point to the NASA repositories, and the build files (`Makefile`, `sample_defs/`) are not included. Setting them up is part of the exercise: follow the **Setup** and **Build and Run** sections of the upstream README below.
+
+## Notes for this course
+
+- Tested on Ubuntu 24.04 (GCC 13.3, CMake 3.28) as a normal user. Required packages: `sudo apt install build-essential cmake git`.
+- After `git clone`, the directories `cfe/`, `osal/`, `psp/`, `apps/*` and `tools/*` are empty until you run `git submodule init` and `git submodule update`.
+- If you run cFS as a normal user (not root), do the `OSAL_DEBUG_PERMISSIVE_MODE` step of the Setup section. Without it, `core-cpu1` exits right after starting with `CFE_PSP: OS_API_Init() failure`.
+- The build prints a few `-Waddress-of-packed-member` warnings in `sample_app` and `ci_lab`. These are expected and harmless.
+- Most timestamps on the console read `1980-012-...` because the cFE clock has not been set. This is normal.
+
+## Sending commands
+
+`tools/cFS-GroundSystem` (v2.1.0) needs **Python 2 and PyQt4**. PyQt4 is not packaged for Ubuntu 20.04 or later, so the GUI ground system will not start there. Use `cmdUtil` instead:
+
+```sh
+cd tools/cFS-GroundSystem/Subsystems/cmdUtil
+make
+```
+
+With `core-cpu1` running, open a second terminal and run:
+
+```sh
+# Ask TO_LAB to send telemetry to UDP port 1235 on this machine
+./cmdUtil --host=127.0.0.1 --pktid=0x1880 --endian=LE --cmdcode=6 --string="17:127.0.0.1"
+
+# Send a NOOP to SAMPLE_APP. The cFS console prints "SAMPLE: NOOP command"
+./cmdUtil --host=127.0.0.1 --pktid=0x1882 --endian=LE --cmdcode=0
+```
+
+On x86 PCs, `--endian=LE` is required and must come **before** `--cmdcode`. Without it the command code is written to the wrong byte, so cFS reads it as 0 (NOOP). The bundled `to-enable-tlm.sh` script does not pass this option, so on x86 it sends a NOOP instead of enabling telemetry.
+
+---
+
+*The original upstream README of the cFS bundle follows.*
+
 # Core Flight System - BUNDLE
 
 This repository is a bundle of submodules that make up the Core Flight System (cFS) framework.  Note the "lab" apps are intended as examples only, and enable this bundle to build, execute, receive commands, and send telemetry.  This is not a flight distribution, which is typically made up of the cFE, OSAL, PSP, and a selection of flight apps that coorespond to specific mission requirements.
