@@ -1,3 +1,74 @@
+# cFS Hands-on Practice (GISTDA training fork)
+
+This repository is a training fork of the NASA [cFS bundle](https://github.com/nasa/cFS) at release **Aquila (cFS 6.7.0a)**. It is used for the hands-on exercises of a cFS introductory course. Aquila was chosen over later releases (Caelum, Draco) because its configuration is simpler for first-time users.
+
+## Differences from upstream
+
+- **No submodules.** All components are stored as plain directories, so a normal `git clone` is enough. Each directory is identical to the upstream commit pinned by the v6.7.0a bundle:
+
+  | Directory | Version | Upstream |
+  |---|---|---|
+  | `cfe` | 6.7.0 | [nasa/cFE](https://github.com/nasa/cFE) |
+  | `osal` | 5.0.0 | [nasa/osal](https://github.com/nasa/osal) |
+  | `psp` | 1.4.0 | [nasa/PSP](https://github.com/nasa/PSP) |
+  | `apps/ci_lab`, `apps/to_lab`, `apps/sch_lab` | 2.3.0 | [nasa/ci_lab](https://github.com/nasa/ci_lab), [nasa/to_lab](https://github.com/nasa/to_lab), [nasa/sch_lab](https://github.com/nasa/sch_lab) |
+  | `apps/sample_app`, `apps/sample_lib` | 1.1.0 | [nasa/sample_app](https://github.com/nasa/sample_app), [nasa/sample_lib](https://github.com/nasa/sample_lib) |
+  | `tools/cFS-GroundSystem` | 2.1.0 | [nasa/cFS-GroundSystem](https://github.com/nasa/cFS-GroundSystem) |
+  | `tools/elf2cfetbl` | 3.1.0 | [nasa/elf2cfetbl](https://github.com/nasa/elf2cfetbl) |
+  | `tools/tblCRCTool` | 1.1.0 | [nasa/tblCRCTool](https://github.com/nasa/tblCRCTool) |
+
+- **Setup already done.** `Makefile` and `sample_defs/` are already copied to the top level as described in the upstream *Setup* section below. You do not need to run `git submodule` or the `cp` commands.
+- **Normal-user mode enabled.** `OSAL_DEBUG_PERMISSIVE_MODE` is defined in `sample_defs/default_osconfig.h`, so cFS runs without `sudo`.
+
+## Quick start
+
+Tested on Ubuntu 24.04 (GCC 13.3, CMake 3.28), running as a normal user.
+
+```sh
+sudo apt install build-essential cmake git
+
+git clone https://github.com/ryuhg/gistda-cfs-practice.git
+cd gistda-cfs-practice
+make prep
+make
+make install
+
+cd build/exe/cpu1
+./core-cpu1          # stop with Ctrl+C
+```
+
+Startup should reach `CFE_ES_Main entering OPERATIONAL state`. Run `core-cpu1` from `build/exe/cpu1`, because it loads the startup script and apps from `./cf`. Most timestamps read `1980-012-...` because the cFE clock has not been set; this is normal.
+
+## Sending commands
+
+Build `cmdUtil` once:
+
+```sh
+cd tools/cFS-GroundSystem/Subsystems/cmdUtil
+make
+```
+
+With `core-cpu1` running, open a second terminal and run:
+
+```sh
+# Ask TO_LAB to send telemetry to UDP port 1235 on this machine
+./cmdUtil --host=127.0.0.1 --pktid=0x1880 --endian=LE --cmdcode=6 --string="17:127.0.0.1"
+
+# Send a NOOP to SAMPLE_APP. The cFS console prints "SAMPLE: NOOP command"
+./cmdUtil --host=127.0.0.1 --pktid=0x1882 --endian=LE --cmdcode=0
+```
+
+On x86 PCs, `--endian=LE` is required and must come **before** `--cmdcode`. Without it the command code is written to the wrong byte, so cFS reads it as 0 (NOOP). The bundled `to-enable-tlm.sh` script does not pass this option, so on x86 it sends a NOOP instead of enabling telemetry.
+
+## Known limitations
+
+- `tools/cFS-GroundSystem` (v2.1.0) needs **Python 2 and PyQt4**. PyQt4 is not packaged for Ubuntu 20.04 or later, so the GUI ground system will not start there. Use `cmdUtil` to send commands.
+- The build prints a few `-Waddress-of-packed-member` warnings in `sample_app` and `ci_lab`. These are expected and harmless.
+
+---
+
+*The original upstream README of the cFS bundle follows.*
+
 # Core Flight System - BUNDLE
 
 This repository is a bundle of submodules that make up the Core Flight System (cFS) framework.  Note the "lab" apps are intended as examples only, and enable this bundle to build, execute, receive commands, and send telemetry.  This is not a flight distribution, which is typically made up of the cFE, OSAL, PSP, and a selection of flight apps that coorespond to specific mission requirements.
