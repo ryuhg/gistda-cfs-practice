@@ -400,8 +400,17 @@ void CFE_ES_ExitApp(uint32 ExitStatus)
     ReturnCode = CFE_ES_GetAppIDInternal(&AppID);
     if ( ReturnCode == CFE_SUCCESS )
     {
-       /* Set the status in the global table */
-       CFE_ES_Global.AppTable[AppID].ControlReq.AppControlRequest = ExitStatus;
+       /*
+       ** Set the status in the global table, but only if no other request
+       ** is pending. If ES already asked the app to stop (restart, reload
+       ** or delete command), this call is the app's response to that
+       ** request, and overwriting it would turn a restart into an error
+       ** exit. Later cFE versions behave the same way.
+       */
+       if ( CFE_ES_Global.AppTable[AppID].ControlReq.AppControlRequest == CFE_ES_RunStatus_APP_RUN )
+       {
+          CFE_ES_Global.AppTable[AppID].ControlReq.AppControlRequest = ExitStatus;
+       }
 
        /*
        ** Check to see if the App is an external cFE App.
