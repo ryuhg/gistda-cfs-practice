@@ -1,0 +1,36 @@
+/*******************************************************************************
+**
+**      GSC-18128-1, "Core Flight Executive Version 6.7"
+**
+**      Copyright (c) 2006-2019 United States Government as represented by
+**      the Administrator of the National Aeronautics and Space Administration.
+**      All Rights Reserved.
+**
+**      Licensed under the Apache License, Version 2.0 (the "License");
+**      you may not use this file except in compliance with the License.
+**      You may obtain a copy of the License at
+**
+**        http://www.apache.org/licenses/LICENSE-2.0
+**
+**      Unless required by applicable law or agreed to in writing, software
+**      distributed under the License is distributed on an "AS IS" BASIS,
+**      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+**      See the License for the specific language governing permissions and
+**      limitations under the License.
+**
+** File: imu_app_msgids.h
+**
+** Purpose:
+**  Define IMU_APP App Message IDs
+**
+*************************************************************************/
+#ifndef _imu_app_msgids_h_
+#define _imu_app_msgids_h_
+
+#define IMU_APP_CMD_MID              0x18A0   /* ground commands */
+#define IMU_APP_SEND_HK_MID          0x18A1   /* housekeeping request (from SCH_LAB) */
+#define IMU_APP_WAKEUP_MID           0x18A2   /* read the sensor once (from SCH_LAB, 1 Hz) */
+#define IMU_APP_HK_TLM_MID           0x08A0   /* housekeeping telemetry */
+#define IMU_APP_DATA_TLM_MID         0x08A1   /* sensor data, stored by DS */
+
+#endif /* _imu_app_msgids_h_ */
