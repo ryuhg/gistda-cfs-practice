@@ -15,7 +15,6 @@ Examples:
     python3 ground.py listen --only IMU EVENT
     python3 ground.py send 0x1882 0                 # SAMPLE_APP NOOP
     python3 ground.py send 0x18A0 1                 # IMU_APP RESET_COUNTERS
-    python3 ground.py send 0x1806 6 --string 20:IMU_APP   # ES: restart IMU_APP
     python3 ground.py dump build/exe/cpu1/cf/imu00000001.dat
 
 Run "python3 ground.py COMMAND --help" for the options of each command.

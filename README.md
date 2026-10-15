@@ -21,8 +21,8 @@ This repository is a training fork of the NASA [cFS bundle](https://github.com/n
 
 - **Setup already done.** `Makefile` and `sample_defs/` are already copied to the top level as described in the upstream *Setup* section below, and `OSAL_DEBUG_PERMISSIVE_MODE` is defined so cFS runs without `sudo`.
 - **Added for the course:** `create_app.py`, `ground.py`, `apps/sim_i2c` and `apps/imu_app` (see below).
-- **Changes to upstream code** (see `git log` for details):
-  - `cfe`: ES "restart app" now restarts the app instead of deleting it (fix from later cFE versions).
+- **cFE, OSAL and PSP are unchanged** from the upstream release.
+- **Changes to other upstream code** (see `git log` for details):
   - `cfs_lib`: added `CMakeLists.txt`; fixed a pointer type error that stops the build with GCC 14.
   - `ds`, `sch_lab`, `to_lab`: include paths, schedule and subscriptions for the IMU example. DS tables for the example are in `sample_defs/tables/`.
 
@@ -68,7 +68,6 @@ In a third terminal, send commands with a message ID and a command code:
 python3 ground.py send 0x1882 0                         # SAMPLE_APP NOOP
 python3 ground.py send 0x18A0 0                         # IMU_APP NOOP
 python3 ground.py send 0x18A0 1                         # IMU_APP RESET_COUNTERS
-python3 ground.py send 0x1806 6 --string 20:IMU_APP     # ES: restart IMU_APP
 ```
 
 Parameters are added in order with `--u8`, `--u16`, `--u32`, `--i8`, `--i16`, `--i32`, `--f32` and `--string LEN:TEXT`. If cFS runs on another computer, add `--host <its IP address>` to every command.
@@ -116,7 +115,7 @@ creates `apps/hello_world/` from the sample_app layout (command pipe, NOOP and R
 - `tools/cFS-GroundSystem` (v2.1.0) needs Python 2 and PyQt4, which are not packaged for Ubuntu 20.04 or later. Use `ground.py` instead.
 - If you use `cmdUtil` from cFS-GroundSystem, `--endian=LE` must come before `--cmdcode` on x86 PCs; otherwise every command arrives as NOOP.
 - The build prints `-Waddress-of-packed-member` warnings for apps that send packed telemetry (sample_app, ci_lab, imu_app and apps made with `create_app.py`). They are expected and harmless.
-- When an app is restarted with the ES command, the console shows `CFE_ES_ExitApp: Called with invalid status (1)`. This is harmless; the restart completes.
+- The ES "restart app" command (`CFE_ES_RESTART_APP_CC`) does not restart apps that use the sample_app main loop (SAMPLE_APP, the lab apps, IMU_APP and apps made with `create_app.py`): ES deletes the app and logs `Exit Application ... on Error Completed`. This is a bug in cFE 6.7, fixed in later cFE releases, and is not patched here.
 
 ---
 
