@@ -77,17 +77,13 @@ def event(payload):
 
 
 def imu_hk(payload):
-    err, cmd, ready, samples, i2c_errors = struct.unpack_from("<BBBxII", payload)
-    return "cmd %d  err %d  device_ready %d  samples %d  i2c_errors %d" % (
-        cmd, err, ready, samples, i2c_errors)
+    err, cmd, samples = struct.unpack_from("<BBxxI", payload)
+    return "cmd %d  err %d  samples %d" % (cmd, err, samples)
 
 
 def imu_data(payload):
-    values = struct.unpack_from("<I7h2x7f", payload)
-    sample = values[0]
-    ax, ay, az, gx, gy, gz, temp = values[8:15]
-    return "#%d  accel [%+.3f %+.3f %+.3f] g  gyro [%+.2f %+.2f %+.2f] deg/s  temp %.2f C" % (
-        sample, ax, ay, az, gx, gy, gz, temp)
+    sample, x, y, z = struct.unpack_from("<I3f", payload)
+    return "#%d  x %+.3f  y %+.3f  z %+.3f" % (sample, x, y, z)
 
 
 def ds_hk(payload):
