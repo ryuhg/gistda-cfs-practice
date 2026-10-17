@@ -52,10 +52,8 @@ typedef struct
     uint8              TlmHeader[CFE_SB_TLM_HDR_SIZE];
     uint8              command_error_count;
     uint8              command_count;
-    uint8              device_ready;       /* 1 when the IMU was found and woken up */
-    uint8              spare;
+    uint8              spare[2];
     uint32             sample_count;       /* sensor readings sent */
-    uint32             i2c_error_count;    /* failed I2C transfers */
 
 }   OS_PACK imu_app_hk_tlm_t  ;
 
@@ -69,11 +67,9 @@ typedef struct
 {
     uint8              TlmHeader[CFE_SB_TLM_HDR_SIZE];
     uint32             sample_count;       /* number of this reading */
-    int16              raw[7];             /* register values as read: accel X/Y/Z, temp, gyro X/Y/Z */
-    uint8              spare[2];
-    float              accel_g[3];         /* acceleration X/Y/Z in g */
-    float              gyro_dps[3];        /* rotation rate X/Y/Z in deg/s */
-    float              temp_c;             /* temperature in deg C */
+    float              x;                  /* IMU values from SIM_IMU_Read */
+    float              y;
+    float              z;
 
 }   OS_PACK imu_app_data_tlm_t  ;
 

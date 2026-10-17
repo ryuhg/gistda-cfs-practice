@@ -21,9 +21,9 @@
 ** File: imu_app.c
 **
 ** Purpose:
-**   This file contains the source code for the IMU_APP App. It reads a
-**   (simulated) MPU-6050 IMU over I2C once per second, prints the values
-**   and publishes them on the software bus, where DS stores them.
+**   This file contains the source code for the IMU_APP App. It reads the
+**   simulated IMU (sim_imu library) once per second, prints the x, y and z
+**   values and publishes them on the software bus, where DS stores them.
 **
 *******************************************************************************/
 
@@ -38,7 +38,7 @@
 #include "imu_app_events.h"
 #include "imu_app_version.h"
 
-#include "sim_i2c.h"
+#include "sim_imu.h"
 
 /*
 ** global data
@@ -57,7 +57,6 @@ static CFE_EVS_BinFilter_t  IMU_APP_EventFilters[] =
           {IMU_APP_COMMANDRST_INF_EID,    0x0000},
           {IMU_APP_INVALID_MSGID_ERR_EID, 0x0000},
           {IMU_APP_LEN_ERR_EID,           0x0000},
-          {IMU_APP_READ_ERR_EID,          CFE_EVS_FIRST_8_STOP},  /* at most 8 messages */
        };
 
 /*
@@ -137,8 +136,6 @@ void IMU_APP_Init(void)
                       IMU_APP_MINOR_VERSION,
                       IMU_APP_REVISION,
                       IMU_APP_MISSION_REV);
-
-    IMU_APP_InitDevice();
 
 } /* End of IMU_APP_Init() */
 
@@ -233,52 +230,11 @@ void IMU_APP_ResetCounters(void)
 {
     IMU_APP_HkTelemetryPkt.command_count       = 0;
     IMU_APP_HkTelemetryPkt.command_error_count = 0;
-    IMU_APP_HkTelemetryPkt.i2c_error_count     = 0;
 
     CFE_EVS_SendEvent(IMU_APP_COMMANDRST_INF_EID, CFE_EVS_EventType_INFORMATION,
                       "IMU_APP: RESET command");
 
 } /* End of IMU_APP_ResetCounters() */
-
-/*
-** IMU_APP_InitDevice() -- find the IMU on the I2C bus and wake it up
-**
-** The device answers WHO_AM_I with its own address. It powers up asleep,
-** so PWR_MGMT_1 is cleared to start the measurements.
-*/
-void IMU_APP_InitDevice(void)
-{
-    uint8 WhoAmI = 0;
-    uint8 PwrMgmt = 0x00;
-    int32 Status;
-
-    IMU_APP_HkTelemetryPkt.device_ready = 0;
-
-    Status = SIM_I2C_Read(IMU_APP_I2C_ADDR, IMU_APP_REG_WHO_AM_I, &WhoAmI, 1);
-    if (Status != SIM_I2C_SUCCESS || WhoAmI != IMU_APP_WHO_AM_I_VALUE)
-    {
-        IMU_APP_HkTelemetryPkt.i2c_error_count++;
-        CFE_EVS_SendEvent(IMU_APP_DEVICE_ERR_EID, CFE_EVS_EventType_ERROR,
-                          "IMU_APP: no IMU at I2C address 0x%02X (status %d, WHO_AM_I 0x%02X)",
-                          IMU_APP_I2C_ADDR, (int)Status, WhoAmI);
-        return;
-    }
-
-    Status = SIM_I2C_Write(IMU_APP_I2C_ADDR, IMU_APP_REG_PWR_MGMT_1, &PwrMgmt, 1);
-    if (Status != SIM_I2C_SUCCESS)
-    {
-        IMU_APP_HkTelemetryPkt.i2c_error_count++;
-        CFE_EVS_SendEvent(IMU_APP_DEVICE_ERR_EID, CFE_EVS_EventType_ERROR,
-                          "IMU_APP: could not wake up the IMU (status %d)", (int)Status);
-        return;
-    }
-
-    IMU_APP_HkTelemetryPkt.device_ready = 1;
-    CFE_EVS_SendEvent(IMU_APP_DEVICE_INF_EID, CFE_EVS_EventType_INFORMATION,
-                      "IMU_APP: IMU found at I2C address 0x%02X and woken up",
-                      IMU_APP_I2C_ADDR);
-
-} /* End of IMU_APP_InitDevice() */
 
 /*
 ** IMU_APP_ReadSensor() -- read the IMU once, print it and send it on the bus
@@ -288,52 +244,25 @@ void IMU_APP_InitDevice(void)
 */
 void IMU_APP_ReadSensor(void)
 {
-    uint8 Data[IMU_APP_DATA_LEN];
-    int32 Status;
-    int   i;
+    float X;
+    float Y;
+    float Z;
 
-    /* Try again to set up the device if that failed before */
-    if (IMU_APP_HkTelemetryPkt.device_ready == 0)
+    if (SIM_IMU_Read(&X, &Y, &Z) != SIM_IMU_SUCCESS)
     {
-        IMU_APP_InitDevice();
-        if (IMU_APP_HkTelemetryPkt.device_ready == 0)
-        {
-            return;
-        }
-    }
-
-    /* One burst read of all 14 data registers */
-    Status = SIM_I2C_Read(IMU_APP_I2C_ADDR, IMU_APP_REG_DATA, Data, IMU_APP_DATA_LEN);
-    if (Status != SIM_I2C_SUCCESS)
-    {
-        IMU_APP_HkTelemetryPkt.i2c_error_count++;
         CFE_EVS_SendEvent(IMU_APP_READ_ERR_EID, CFE_EVS_EventType_ERROR,
-                          "IMU_APP: I2C read failed (status %d)", (int)Status);
+                          "IMU_APP: IMU read failed");
         return;
     }
 
-    /* Each value is a signed 16-bit number, high byte first */
-    for (i = 0; i < 7; i++)
-    {
-        IMU_APP_DataPkt.raw[i] = (int16)((Data[2 * i] << 8) | Data[2 * i + 1]);
-    }
-
-    /* Convert to engineering units */
-    for (i = 0; i < 3; i++)
-    {
-        IMU_APP_DataPkt.accel_g[i]  = IMU_APP_DataPkt.raw[i] / IMU_APP_ACCEL_COUNTS_PER_G;
-        IMU_APP_DataPkt.gyro_dps[i] = IMU_APP_DataPkt.raw[4 + i] / IMU_APP_GYRO_COUNTS_PER_DPS;
-    }
-    IMU_APP_DataPkt.temp_c = IMU_APP_DataPkt.raw[3] / IMU_APP_TEMP_COUNTS_PER_C + IMU_APP_TEMP_OFFSET_C;
-
     IMU_APP_HkTelemetryPkt.sample_count++;
     IMU_APP_DataPkt.sample_count = IMU_APP_HkTelemetryPkt.sample_count;
+    IMU_APP_DataPkt.x = X;
+    IMU_APP_DataPkt.y = Y;
+    IMU_APP_DataPkt.z = Z;
 
-    OS_printf("IMU_APP: #%lu accel [%+.3f %+.3f %+.3f] g  gyro [%+.2f %+.2f %+.2f] deg/s  temp %.2f C\n",
-              (unsigned long)IMU_APP_DataPkt.sample_count,
-              IMU_APP_DataPkt.accel_g[0], IMU_APP_DataPkt.accel_g[1], IMU_APP_DataPkt.accel_g[2],
-              IMU_APP_DataPkt.gyro_dps[0], IMU_APP_DataPkt.gyro_dps[1], IMU_APP_DataPkt.gyro_dps[2],
-              IMU_APP_DataPkt.temp_c);
+    OS_printf("IMU_APP: #%lu  x %+.3f  y %+.3f  z %+.3f\n",
+              (unsigned long)IMU_APP_DataPkt.sample_count, X, Y, Z);
 
     CFE_SB_TimeStampMsg((CFE_SB_Msg_t *) &IMU_APP_DataPkt);
     CFE_SB_SendMsg((CFE_SB_Msg_t *) &IMU_APP_DataPkt);

@@ -4,7 +4,7 @@ CFE_APP, /cf/ci_lab.so,      CI_Lab_AppMain,  CI_LAB_APP,   60,   16384, 0x0, 0;
 CFE_APP, /cf/to_lab.so,      TO_Lab_AppMain,  TO_LAB_APP,   70,   16384, 0x0, 0;
 CFE_APP, /cf/sch_lab.so,     SCH_Lab_AppMain, SCH_LAB_APP,  80,   16384, 0x0, 0;
 CFE_LIB, /cf/cfs_lib.so,     CFS_LibInit,     CFS_LIB,       0,   0,     0x0, 0;
-CFE_LIB, /cf/sim_i2c.so,     SIM_I2C_LibInit, SIM_I2C,       0,   0,     0x0, 0;
+CFE_LIB, /cf/sim_imu.so,     SIM_IMU_LibInit, SIM_IMU,       0,   0,     0x0, 0;
 CFE_APP, /cf/ds.so,          DS_AppMain,      DS,           90,   16384, 0x0, 0;
 CFE_APP, /cf/imu_app.so,     IMU_APP_Main,    IMU_APP,      95,   16384, 0x0, 0;
 !

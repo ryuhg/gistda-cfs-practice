@@ -34,8 +34,6 @@
 #define IMU_APP_COMMANDRST_INF_EID        4
 #define IMU_APP_INVALID_MSGID_ERR_EID     5
 #define IMU_APP_LEN_ERR_EID               6
-#define IMU_APP_DEVICE_INF_EID            7
-#define IMU_APP_DEVICE_ERR_EID            8
-#define IMU_APP_READ_ERR_EID              9
+#define IMU_APP_READ_ERR_EID              7
 
 #endif /* _imu_app_events_h_ */

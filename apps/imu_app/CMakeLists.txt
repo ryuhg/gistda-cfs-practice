@@ -3,7 +3,7 @@ project(CFE_IMU_APP C)
 
 include_directories(fsw/mission_inc)
 include_directories(fsw/platform_inc)
-include_directories(${sim_i2c_MISSION_DIR}/fsw/public_inc)
+include_directories(${sim_imu_MISSION_DIR}/fsw/public_inc)
 
 aux_source_directory(fsw/src APP_SRC_FILES)
 
