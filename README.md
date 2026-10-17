@@ -20,7 +20,7 @@ This repository is a training fork of the NASA [cFS bundle](https://github.com/n
   | `tools/tblCRCTool` | 1.1.0 | [nasa/tblCRCTool](https://github.com/nasa/tblCRCTool) |
 
 - **Setup already done.** `Makefile` and `sample_defs/` are already copied to the top level as described in the upstream *Setup* section below, and `OSAL_DEBUG_PERMISSIVE_MODE` is defined so cFS runs without `sudo`.
-- **Added for the course:** `create_app.py`, `ground.py`, `apps/sim_imu` and `apps/imu_app` (see below).
+- **Added for the course:** `create_app.py`, `ground.py`, `apps/sim_imu` and `apps/imu` (see below).
 - **cFE, OSAL and PSP are unchanged** from the upstream release.
 - **Changes to other upstream code** (see `git log` for details):
   - `cfs_lib`: added `CMakeLists.txt`; fixed a pointer type error that stops the build with GCC 14.
@@ -46,7 +46,7 @@ cd build/exe/cpu1
 Startup should reach `CFE_ES_Main entering OPERATIONAL state`, and then the IMU example prints one line per second:
 
 ```
-IMU_APP: #1  x -0.074  y +0.068  z +1.002
+IMU: x +0.097  y -0.013  z +1.002
 ```
 
 Run `core-cpu1` from `build/exe/cpu1`, because it loads the startup script and apps from `./cf`. Most timestamps read `1980-012-...` because the cFE clock has not been set; this is normal. Run only one cFS at a time on a computer (it uses UDP ports 1234 and 1235).
@@ -60,41 +60,41 @@ python3 ground.py listen                       # show telemetry (Ctrl+C to stop)
 python3 ground.py listen --only IMU EVENT      # only lines containing these words
 ```
 
-`listen` asks TO_LAB to start sending telemetry, and repeats this every 5 seconds while nothing arrives, so it does not matter whether cFS or `ground.py` starts first. Events are shown with their text, for example `EVENT INFO IMU_APP 3: IMU_APP: NOOP command`.
+`listen` asks TO_LAB to start sending telemetry, and repeats this every 5 seconds while nothing arrives, so it does not matter whether cFS or `ground.py` starts first. Events are shown with their text, for example `EVENT INFO IMU 3: IMU: NOOP command`.
 
 In a third terminal, send commands with a message ID and a command code:
 
 ```sh
 python3 ground.py send 0x1882 0                         # SAMPLE_APP NOOP
-python3 ground.py send 0x18A0 0                         # IMU_APP NOOP
-python3 ground.py send 0x18A0 1                         # IMU_APP RESET_COUNTERS
+python3 ground.py send 0x18A0 0                         # IMU NOOP
+python3 ground.py send 0x18A0 1                         # IMU RESET_COUNTERS
 ```
 
 Parameters are added in order with `--u8`, `--u16`, `--u32`, `--i8`, `--i16`, `--i32`, `--f32` and `--string LEN:TEXT`. If cFS runs on another computer, add `--host <its IP address>` to every command.
 
 ## IMU example
 
-IMU_APP reads a simulated IMU once per second, prints the values and sends them on the software bus, where DS stores them in a file:
+The IMU app reads a simulated IMU once per second, prints the values and sends them on the software bus, where DS stores them in a file:
 
 ```
-SCH_LAB --wakeup (1 Hz)--> IMU_APP --SIM_IMU_Read(&x, &y, &z)--> sim_imu
-                              |
-                              +-- prints one line on the console
-                              +-- IMU_APP_DATA_TLM_MID --> DS     --> build/exe/cpu1/cf/imuNNNNNNNN.dat
-                                                       --> TO_LAB --> ground.py listen
+SCH_LAB --wakeup (1 Hz)--> IMU --SIM_IMU_Read(&x, &y, &z)--> sim_imu
+                            |
+                            +-- prints one line on the console
+                            +-- IMU_MEASUREMENTS_TLM_MID --> DS     --> build/exe/cpu1/cf/imuNNNNNNNN.dat
+                                                         --> TO_LAB --> ground.py listen
 ```
 
 - `apps/sim_imu`: a library that stands in for the IMU and its driver. `SIM_IMU_Read(&x, &y, &z)` returns three float values (acceleration in g): z is about 1.0, and x and y swing between -0.1 and +0.1 over 20 seconds, with a little noise. It runs inside cFS and needs no hardware, network port or extra program.
-- `apps/imu_app`: made with `create_app.py`, then extended. On each wakeup it calls `SIM_IMU_Read`, prints the values and publishes them.
-- `sample_defs/tables/ds_file_tbl.c`, `ds_filter_tbl.c`: DS stores every IMU data packet and starts a new file every minute. Numbering restarts at 1 when cFS starts, so files of the previous run are overwritten.
+- `apps/imu`: made with `create_app.py imu`, then extended. On each wakeup it calls `SIM_IMU_Read`, prints the values and publishes them.
+- `sample_defs/tables/ds_file_tbl.c`, `ds_filter_tbl.c`: DS stores every IMU measurements packet and starts a new file every minute. Numbering restarts at 1 when cFS starts, so files of the previous run are overwritten.
 
 | Message ID | Name | |
 |---|---|---|
-| `0x18A0` | `IMU_APP_CMD_MID` | commands: 0 NOOP, 1 RESET_COUNTERS |
-| `0x18A1` | `IMU_APP_SEND_HK_MID` | housekeeping request (SCH_LAB, 4 s) |
-| `0x18A2` | `IMU_APP_WAKEUP_MID` | read the sensor (SCH_LAB, 1 s) |
-| `0x08A0` | `IMU_APP_HK_TLM_MID` | housekeeping: command counters, sample count |
-| `0x08A1` | `IMU_APP_DATA_TLM_MID` | sensor data: sample count, x, y, z |
+| `0x18A0` | `IMU_CMD_MID` | commands: 0 NOOP, 1 RESET_COUNTERS |
+| `0x18A1` | `IMU_SEND_HK_MID` | housekeeping request (SCH_LAB, 4 s) |
+| `0x18A2` | `IMU_WAKEUP_MID` | read the sensor (SCH_LAB, 1 s) |
+| `0x08A0` | `IMU_HK_TLM_MID` | housekeeping: command counters |
+| `0x08A1` | `IMU_MEASUREMENTS_TLM_MID` | measurements: x, y, z (`imu_measurements_tlm_t`) |
 
 To check what DS stored, read a file with `ground.py`. The lines match the console output of the same samples:
 
@@ -114,8 +114,8 @@ creates `apps/hello_world/` from the sample_app layout (command pipe, NOOP and R
 
 - `tools/cFS-GroundSystem` (v2.1.0) needs Python 2 and PyQt4, which are not packaged for Ubuntu 20.04 or later. Use `ground.py` instead.
 - If you use `cmdUtil` from cFS-GroundSystem, `--endian=LE` must come before `--cmdcode` on x86 PCs; otherwise every command arrives as NOOP.
-- The build prints `-Waddress-of-packed-member` warnings for apps that send packed telemetry (sample_app, ci_lab, imu_app and apps made with `create_app.py`). They are expected and harmless.
-- The ES "restart app" command (`CFE_ES_RESTART_APP_CC`) does not restart apps that use the sample_app main loop (SAMPLE_APP, the lab apps, IMU_APP and apps made with `create_app.py`): ES deletes the app and logs `Exit Application ... on Error Completed`. This is a bug in cFE 6.7, fixed in later cFE releases, and is not patched here.
+- The build prints `-Waddress-of-packed-member` warnings for apps that send packed telemetry (sample_app, ci_lab, imu and apps made with `create_app.py`). They are expected and harmless.
+- The ES "restart app" command (`CFE_ES_RESTART_APP_CC`) does not restart apps that use the sample_app main loop (SAMPLE_APP, the lab apps, IMU and apps made with `create_app.py`): ES deletes the app and logs `Exit Application ... on Error Completed`. This is a bug in cFE 6.7, fixed in later cFE releases, and is not patched here.
 
 ---
 
