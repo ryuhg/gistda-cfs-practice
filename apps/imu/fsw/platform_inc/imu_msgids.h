@@ -27,10 +27,10 @@
 #ifndef _imu_msgids_h_
 #define _imu_msgids_h_
 
-#define IMU_CMD_MID              0x18A0   /* ground commands */
-#define IMU_SEND_HK_MID          0x18A1   /* housekeeping request (from SCH_LAB) */
-#define IMU_WAKEUP_MID           0x18A2   /* read the sensor once (from SCH_LAB, 1 Hz) */
-#define IMU_HK_TLM_MID           0x08A0   /* housekeeping telemetry */
-#define IMU_MEASUREMENTS_TLM_MID 0x08A1   /* IMU measurements, stored by DS */
+#define IMU_CMD_MID              0x18C0   /* ground commands */
+#define IMU_SEND_HK_MID          0x18C1   /* housekeeping request (from SCH_LAB) */
+#define IMU_WAKEUP_MID           0x18C2   /* read the sensor once (from SCH_LAB, 1 Hz) */
+#define IMU_HK_TLM_MID           0x08C0   /* housekeeping telemetry */
+#define IMU_MEASUREMENTS_TLM_MID 0x08C1   /* IMU measurements, stored by DS */
 
 #endif /* _imu_msgids_h_ */

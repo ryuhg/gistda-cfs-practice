@@ -24,7 +24,7 @@ This repository is a training fork of the NASA [cFS bundle](https://github.com/n
 - **cFE, OSAL and PSP are unchanged** from the upstream release.
 - **Changes to other upstream code** (see `git log` for details):
   - `cfs_lib`: added `CMakeLists.txt`; fixed a pointer type error that stops the build with GCC 14.
-  - `ds`, `sch_lab`, `to_lab`: include paths, schedule and subscriptions for the IMU example. DS tables for the example are in `sample_defs/tables/`.
+  - `ds`, `sch_lab`: include paths and schedule for the IMU example. DS tables for the example are in `sample_defs/tables/`.
 
 ## Quick start
 
@@ -66,8 +66,8 @@ In a third terminal, send commands with a message ID and a command code:
 
 ```sh
 python3 ground.py send 0x1882 0                         # SAMPLE_APP NOOP
-python3 ground.py send 0x18A0 0                         # IMU NOOP
-python3 ground.py send 0x18A0 1                         # IMU RESET_COUNTERS
+python3 ground.py send 0x18C0 0                         # IMU NOOP
+python3 ground.py send 0x18C0 1                         # IMU RESET_COUNTERS
 ```
 
 Parameters are added in order with `--u8`, `--u16`, `--u32`, `--i8`, `--i16`, `--i32`, `--f32` and `--string LEN:TEXT`. If cFS runs on another computer, add `--host <its IP address>` to every command.
@@ -80,8 +80,7 @@ The IMU app reads a simulated IMU once per second, prints the values and sends t
 SCH_LAB --wakeup (1 Hz)--> IMU --SIM_IMU_Read(&x, &y, &z)--> sim_imu
                             |
                             +-- prints one line on the console
-                            +-- IMU_MEASUREMENTS_TLM_MID --> DS     --> build/exe/cpu1/cf/imuNNNNNNNN.dat
-                                                         --> TO_LAB --> ground.py listen
+                            +-- IMU_MEASUREMENTS_TLM_MID --> DS --> build/exe/cpu1/cf/imuNNNNNNNN.dat
 ```
 
 - `apps/sim_imu`: a library that stands in for the IMU and its driver. `SIM_IMU_Read(&x, &y, &z)` returns three float values (acceleration in g): z is about 1.0, and x and y swing between -0.1 and +0.1 over 20 seconds, with a little noise. It runs inside cFS and needs no hardware, network port or extra program.
@@ -90,11 +89,11 @@ SCH_LAB --wakeup (1 Hz)--> IMU --SIM_IMU_Read(&x, &y, &z)--> sim_imu
 
 | Message ID | Name | |
 |---|---|---|
-| `0x18A0` | `IMU_CMD_MID` | commands: 0 NOOP, 1 RESET_COUNTERS |
-| `0x18A1` | `IMU_SEND_HK_MID` | housekeeping request (SCH_LAB, 4 s) |
-| `0x18A2` | `IMU_WAKEUP_MID` | read the sensor (SCH_LAB, 1 s) |
-| `0x08A0` | `IMU_HK_TLM_MID` | housekeeping: command counters |
-| `0x08A1` | `IMU_MEASUREMENTS_TLM_MID` | measurements: x, y, z (`imu_measurements_tlm_t`) |
+| `0x18C0` | `IMU_CMD_MID` | commands: 0 NOOP, 1 RESET_COUNTERS |
+| `0x18C1` | `IMU_SEND_HK_MID` | housekeeping request (SCH_LAB, 4 s) |
+| `0x18C2` | `IMU_WAKEUP_MID` | read the sensor (SCH_LAB, 1 s) |
+| `0x08C0` | `IMU_HK_TLM_MID` | housekeeping: command counters |
+| `0x08C1` | `IMU_MEASUREMENTS_TLM_MID` | measurements: x, y, z (`imu_measurements_tlm_t`) |
 
 To check what DS stored, read a file with `ground.py`. The lines match the console output of the same samples:
 

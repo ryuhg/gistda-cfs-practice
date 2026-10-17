@@ -38,8 +38,6 @@
 #include "ci_lab_msgids.h"
 
 #include "sample_app_msgids.h"
-#include "imu_msgids.h"
-#include "ds_msgids.h"
 
 #if 0
 #include "hs_msgids.h"
@@ -56,9 +54,6 @@ static TO_subscription_t  TO_SubTable[] =
             {TO_LAB_DATA_TYPES_MID, {0,0},  4},
             {CI_LAB_HK_TLM_MID,     {0,0},  4},
             {SAMPLE_APP_HK_TLM_MID, {0,0},  4},
-            {IMU_HK_TLM_MID,           {0,0},  4},
-            {IMU_MEASUREMENTS_TLM_MID, {0,0},  4},
-            {DS_HK_TLM_MID,         {0,0},  4},
 
 #if 0
             /* Add these if needed */

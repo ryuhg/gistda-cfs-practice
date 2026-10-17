@@ -14,7 +14,7 @@ Examples:
     python3 ground.py listen
     python3 ground.py listen --only IMU EVENT
     python3 ground.py send 0x1882 0                 # SAMPLE_APP NOOP
-    python3 ground.py send 0x18A0 1                 # IMU RESET_COUNTERS
+    python3 ground.py send 0x18C0 1                 # IMU RESET_COUNTERS
     python3 ground.py dump build/exe/cpu1/cf/imu00000001.dat
 
 Run "python3 ground.py COMMAND --help" for the options of each command.
@@ -108,8 +108,8 @@ PACKETS = {
     0x0881: ("TO_LAB_DATA_TYPES", None),
     0x0883: ("SAMPLE_APP_HK", err_cmd),
     0x0884: ("CI_LAB_HK", err_cmd),
-    0x08A0: ("IMU_HK", err_cmd),
-    0x08A1: ("IMU_MEASUREMENTS", imu_measurements),
+    0x08C0: ("IMU_HK", err_cmd),
+    0x08C1: ("IMU_MEASUREMENTS", imu_measurements),
     0x08B8: ("DS_HK", ds_hk),
     0x08B9: ("DS_DIAG", None),
 }
