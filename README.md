@@ -24,7 +24,8 @@ This repository is a training fork of the NASA [cFS bundle](https://github.com/n
 - **cFE, OSAL and PSP are unchanged** from the upstream release.
 - **Changes to other upstream code** (see `git log` for details):
   - `cfs_lib`: added `CMakeLists.txt`; fixed a pointer type error that stops the build with GCC 14.
-  - `ds`, `sch_lab`: include paths and schedule for the IMU example. DS tables for the example are in `sample_defs/tables/`.
+  - `ds`: the destination file and packet filter tables in `fsw/tables/` are rewritten for the IMU example (5 readable entries each instead of the long samples), plus an include path for the IMU message IDs.
+  - `sch_lab`: include path and schedule for the IMU example.
 
 ## Quick start
 
@@ -85,7 +86,7 @@ SCH_LAB --wakeup (1 Hz)--> IMU --SIM_IMU_Read(&x, &y, &z)--> sim_imu
 
 - `apps/sim_imu`: a library that stands in for the IMU and its driver. `SIM_IMU_Read(&x, &y, &z)` returns three float values (acceleration in g): z is about 1.0, and x and y swing between -0.1 and +0.1 over 20 seconds, with a little noise. It runs inside cFS and needs no hardware, network port or extra program.
 - `apps/imu`: made with `create_app.py imu`, then extended. On each wakeup it calls `SIM_IMU_Read`, prints the values and publishes them.
-- `sample_defs/tables/ds_file_tbl.c`, `ds_filter_tbl.c`: DS stores every IMU measurements packet and starts a new file every minute. Numbering restarts at 1 when cFS starts, so files of the previous run are overwritten.
+- `apps/ds/fsw/tables/ds_file_tbl.c`, `ds_filter_tbl.c`: entry 0 of each table makes DS store every IMU measurements packet and start a new file every minute; entries 1 to 4 are empty. Numbering restarts at 1 when cFS starts, so files of the previous run are overwritten.
 
 | Message ID | Name | |
 |---|---|---|
