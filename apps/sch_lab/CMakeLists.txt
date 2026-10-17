@@ -6,7 +6,7 @@ include_directories(fsw/platform_inc)
 include_directories(${ci_lab_MISSION_DIR}/fsw/platform_inc)
 include_directories(${to_lab_MISSION_DIR}/fsw/platform_inc)
 include_directories(${sample_app_MISSION_DIR}/fsw/platform_inc)
-include_directories(${imu_app_MISSION_DIR}/fsw/platform_inc)
+include_directories(${imu_MISSION_DIR}/fsw/platform_inc)
 include_directories(${ds_MISSION_DIR}/fsw/platform_inc)
 
 aux_source_directory(fsw/src APP_SRC_FILES)

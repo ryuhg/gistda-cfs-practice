@@ -18,22 +18,39 @@
 **      See the License for the specific language governing permissions and
 **      limitations under the License.
 **
-** File: imu_app_events.h
+** File: imu.h
 **
 ** Purpose:
-**  Define IMU_APP App Event IDs
+**   This file is main hdr file for the IMU application.
 **
-*************************************************************************/
-#ifndef _imu_app_events_h_
-#define _imu_app_events_h_
+*******************************************************************************/
+#ifndef _imu_h_
+#define _imu_h_
 
-#define IMU_APP_RESERVED_EID              0
-#define IMU_APP_STARTUP_INF_EID           1
-#define IMU_APP_COMMAND_ERR_EID           2
-#define IMU_APP_COMMANDNOP_INF_EID        3
-#define IMU_APP_COMMANDRST_INF_EID        4
-#define IMU_APP_INVALID_MSGID_ERR_EID     5
-#define IMU_APP_LEN_ERR_EID               6
-#define IMU_APP_READ_ERR_EID              7
+/*
+** Required header files.
+*/
+#include "cfe.h"
 
-#endif /* _imu_app_events_h_ */
+/***********************************************************************/
+
+#define IMU_PIPE_DEPTH                     32
+
+/****************************************************************************/
+/*
+** Local function prototypes.
+**
+** Note: Except for the entry point (IMU_Main), these
+**       functions are not called from any other source module.
+*/
+void IMU_Main(void);
+void IMU_Init(void);
+void IMU_ProcessCommandPacket(void);
+void IMU_ProcessGroundCommand(void);
+void IMU_ReportHousekeeping(void);
+void IMU_ResetCounters(void);
+void IMU_ReadSensor(void);
+
+bool IMU_VerifyCmdLength(CFE_SB_MsgPtr_t msg, uint16 ExpectedLength);
+
+#endif /* _imu_h_ */

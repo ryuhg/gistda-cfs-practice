@@ -18,18 +18,22 @@
 **      See the License for the specific language governing permissions and
 **      limitations under the License.
 **
-** File: imu_app_version.h
+** File: imu_events.h
 **
 ** Purpose:
-**  The IMU_APP App header file containing version number
+**  Define IMU App Event IDs
 **
 *************************************************************************/
-#ifndef _imu_app_version_h_
-#define _imu_app_version_h_
+#ifndef _imu_events_h_
+#define _imu_events_h_
 
-#define IMU_APP_MAJOR_VERSION    1
-#define IMU_APP_MINOR_VERSION    0
-#define IMU_APP_REVISION         0
-#define IMU_APP_MISSION_REV      0
+#define IMU_RESERVED_EID              0
+#define IMU_STARTUP_INF_EID           1
+#define IMU_COMMAND_ERR_EID           2
+#define IMU_COMMANDNOP_INF_EID        3
+#define IMU_COMMANDRST_INF_EID        4
+#define IMU_INVALID_MSGID_ERR_EID     5
+#define IMU_LEN_ERR_EID               6
+#define IMU_READ_ERR_EID              7
 
-#endif /* _imu_app_version_h_ */
+#endif /* _imu_events_h_ */

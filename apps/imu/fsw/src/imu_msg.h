@@ -18,20 +18,20 @@
 **      See the License for the specific language governing permissions and
 **      limitations under the License.
 **
-** File: imu_app_msg.h
+** File: imu_msg.h
 **
 ** Purpose:
-**  Define IMU_APP App Messages and info
+**  Define IMU App Messages and info
 **
 *******************************************************************************/
-#ifndef _imu_app_msg_h_
-#define _imu_app_msg_h_
+#ifndef _imu_msg_h_
+#define _imu_msg_h_
 
 /*
-** IMU_APP App command codes
+** IMU App command codes
 */
-#define IMU_APP_NOOP_CC                 0
-#define IMU_APP_RESET_COUNTERS_CC       1
+#define IMU_NOOP_CC                 0
+#define IMU_RESET_COUNTERS_CC       1
 
 /*************************************************************************/
 /*
@@ -41,11 +41,11 @@ typedef struct
 {
    uint8    CmdHeader[CFE_SB_CMD_HDR_SIZE];
 
-} IMU_APP_NoArgsCmd_t;
+} IMU_NoArgsCmd_t;
 
 /*************************************************************************/
 /*
-** Type definition (IMU_APP App housekeeping)
+** Type definition (IMU App housekeeping)
 */
 typedef struct
 {
@@ -53,26 +53,24 @@ typedef struct
     uint8              command_error_count;
     uint8              command_count;
     uint8              spare[2];
-    uint32             sample_count;       /* sensor readings sent */
 
-}   OS_PACK imu_app_hk_tlm_t  ;
+}   OS_PACK imu_hk_tlm_t  ;
 
-#define IMU_APP_HK_TLM_LNGTH   sizeof ( imu_app_hk_tlm_t )
+#define IMU_HK_TLM_LNGTH   sizeof ( imu_hk_tlm_t )
 
 /*************************************************************************/
 /*
-** Type definition (IMU_APP sensor data, one packet per reading)
+** Type definition (IMU measurements, one packet per reading)
 */
 typedef struct
 {
     uint8              TlmHeader[CFE_SB_TLM_HDR_SIZE];
-    uint32             sample_count;       /* number of this reading */
     float              x;                  /* IMU values from SIM_IMU_Read */
     float              y;
     float              z;
 
-}   OS_PACK imu_app_data_tlm_t  ;
+}   OS_PACK imu_measurements_tlm_t  ;
 
-#define IMU_APP_DATA_TLM_LNGTH   sizeof ( imu_app_data_tlm_t )
+#define IMU_MEASUREMENTS_TLM_LNGTH   sizeof ( imu_measurements_tlm_t )
 
-#endif /* _imu_app_msg_h_ */
+#endif /* _imu_msg_h_ */

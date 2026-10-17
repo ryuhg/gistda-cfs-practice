@@ -11,7 +11,7 @@
 **   up to 4 destination files; each filter is
 **     { file table index, filter type, N, X, O }
 **   and stores N packets out of every X, starting at offset O.
-**   { FILE_IMU_DATA, DS_BY_COUNT, 1, 1, 0 } stores every packet.
+**   { FILE_IMU_MEASUREMENTS, DS_BY_COUNT, 1, 1, 0 } stores every packet.
 **
 *************************************************************************/
 
@@ -22,25 +22,25 @@
 #include "ds_app.h"
 #include "ds_msg.h"
 
-#include "imu_app_msgids.h"
+#include "imu_msgids.h"
 
 /*
 ** File table index numbers, defined in ds_file_tbl.c
 */
-#define FILE_IMU_DATA   0
+#define FILE_IMU_MEASUREMENTS   0
 
 DS_FilterTable_t DS_FilterTable =
 {
   /* .Descriptor = */ "IMU example filter table",
   /* .Packet     = */
   {
-    /* Packet Index 000 -- IMU_APP sensor data */
+    /* Packet Index 000 -- IMU measurements */
     {
-      /* .MessageID = */ IMU_APP_DATA_TLM_MID,
+      /* .MessageID = */ IMU_MEASUREMENTS_TLM_MID,
       /* .Filter    = */
       {
         /* File table index, filter type, N, X, O */
-        { FILE_IMU_DATA, DS_BY_COUNT, 1, 1, 0 },
+        { FILE_IMU_MEASUREMENTS, DS_BY_COUNT, 1, 1, 0 },
         { DS_UNUSED, DS_UNUSED, DS_UNUSED, DS_UNUSED, DS_UNUSED },
         { DS_UNUSED, DS_UNUSED, DS_UNUSED, DS_UNUSED, DS_UNUSED },
         { DS_UNUSED, DS_UNUSED, DS_UNUSED, DS_UNUSED, DS_UNUSED }

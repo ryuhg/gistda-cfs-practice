@@ -18,19 +18,18 @@
 **      See the License for the specific language governing permissions and
 **      limitations under the License.
 **
-** File: imu_app_msgids.h
+** File: imu_version.h
 **
 ** Purpose:
-**  Define IMU_APP App Message IDs
+**  The IMU App header file containing version number
 **
 *************************************************************************/
-#ifndef _imu_app_msgids_h_
-#define _imu_app_msgids_h_
+#ifndef _imu_version_h_
+#define _imu_version_h_
 
-#define IMU_APP_CMD_MID              0x18A0   /* ground commands */
-#define IMU_APP_SEND_HK_MID          0x18A1   /* housekeeping request (from SCH_LAB) */
-#define IMU_APP_WAKEUP_MID           0x18A2   /* read the sensor once (from SCH_LAB, 1 Hz) */
-#define IMU_APP_HK_TLM_MID           0x08A0   /* housekeeping telemetry */
-#define IMU_APP_DATA_TLM_MID         0x08A1   /* sensor data, stored by DS */
+#define IMU_MAJOR_VERSION    1
+#define IMU_MINOR_VERSION    0
+#define IMU_REVISION         0
+#define IMU_MISSION_REV      0
 
-#endif /* _imu_app_msgids_h_ */
+#endif /* _imu_version_h_ */

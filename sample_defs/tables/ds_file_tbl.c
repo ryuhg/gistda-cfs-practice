@@ -7,7 +7,7 @@
 **   because it is in sample_defs/tables (see add_cfe_tables in
 **   cfe/cmake/arch_build.cmake).
 **
-**   One destination is defined: the IMU_APP sensor data packets selected
+**   One destination is defined: the IMU measurement packets selected
 **   by ds_filter_tbl.c are written to /cf, which is the directory
 **   build/exe/cpu1/cf on the PC. The files are named imu00000001.dat,
 **   imu00000002.dat, ... and a new file is started every minute.
@@ -30,14 +30,14 @@
 /*
 ** File table index numbers, also used by ds_filter_tbl.c
 */
-#define FILE_IMU_DATA   0
+#define FILE_IMU_MEASUREMENTS   0
 
 DS_DestFileTable_t DS_DestFileTable =
 {
   /* .Descriptor = */ "IMU example file table",
   /* .File       = */
   {
-    /* File Index 00 -- IMU_APP sensor data */
+    /* File Index 00 -- IMU measurements */
     {
 #if (DS_MOVE_FILES == true)
       /* .Movename      = */ DS_EMPTY_STRING,           /* do not move closed files */
