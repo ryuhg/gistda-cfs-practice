@@ -14,7 +14,7 @@ Examples:
     python3 ground.py listen
     python3 ground.py listen --only IMU EVENT
     python3 ground.py send 0x1882 0                 # SAMPLE_APP NOOP
-    python3 ground.py send 0x18A0 1                 # IMU_APP RESET_COUNTERS
+    python3 ground.py send 0x18A0 1                 # IMU RESET_COUNTERS
     python3 ground.py dump build/exe/cpu1/cf/imu00000001.dat
 
 Run "python3 ground.py COMMAND --help" for the options of each command.
@@ -76,14 +76,9 @@ def event(payload):
     return "%-5s %s %d: %s" % (EVENT_TYPES.get(etype, str(etype)), cstr(app), eid, cstr(message))
 
 
-def imu_hk(payload):
-    err, cmd, samples = struct.unpack_from("<BBxxI", payload)
-    return "cmd %d  err %d  samples %d" % (cmd, err, samples)
-
-
-def imu_data(payload):
-    sample, x, y, z = struct.unpack_from("<I3f", payload)
-    return "#%d  x %+.3f  y %+.3f  z %+.3f" % (sample, x, y, z)
+def imu_measurements(payload):
+    x, y, z = struct.unpack_from("<3f", payload)
+    return "x %+.3f  y %+.3f  z %+.3f" % (x, y, z)
 
 
 def ds_hk(payload):
@@ -113,8 +108,8 @@ PACKETS = {
     0x0881: ("TO_LAB_DATA_TYPES", None),
     0x0883: ("SAMPLE_APP_HK", err_cmd),
     0x0884: ("CI_LAB_HK", err_cmd),
-    0x08A0: ("IMU_APP_HK", imu_hk),
-    0x08A1: ("IMU_APP_DATA", imu_data),
+    0x08A0: ("IMU_HK", err_cmd),
+    0x08A1: ("IMU_MEASUREMENTS", imu_measurements),
     0x08B8: ("DS_HK", ds_hk),
     0x08B9: ("DS_DIAG", None),
 }
@@ -296,7 +291,7 @@ def do_listen(args):
         last_packet = time.time()
         name, text = describe(packet)
         if wanted(name, text, args.only):
-            print("%s  %-14s %s" % (time.strftime("%H:%M:%S"), name, text))
+            print("%s  %-17s %s" % (time.strftime("%H:%M:%S"), name, text))
             sys.stdout.flush()
 
 
@@ -352,7 +347,7 @@ def do_dump(args):
         name, text = describe(packet)
         if wanted(name, text, args.only):
             stamp = packet_time(packet) if len(packet) >= TLM_HDR_LEN else "-"
-            print("%s  %-14s %s" % (stamp, name, text))
+            print("%s  %-17s %s" % (stamp, name, text))
         count += 1
         offset += size
     print("%d packets" % count)
