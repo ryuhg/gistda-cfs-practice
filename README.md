@@ -20,7 +20,7 @@ This repository is a training fork of the NASA [cFS bundle](https://github.com/n
   | `tools/tblCRCTool` | 1.1.0 | [nasa/tblCRCTool](https://github.com/nasa/tblCRCTool) |
 
 - **Setup already done.** `Makefile` and `sample_defs/` are already copied to the top level as described in the upstream *Setup* section below, and `OSAL_DEBUG_PERMISSIVE_MODE` is defined so cFS runs without `sudo`.
-- **Added for the course:** `create_app.py`, `ground.py`, `apps/sim_i2c` and `apps/imu_app` (see below).
+- **Added for the course:** `create_app.py`, `ground.py`, `apps/sim_imu` and `apps/imu_app` (see below).
 - **cFE, OSAL and PSP are unchanged** from the upstream release.
 - **Changes to other upstream code** (see `git log` for details):
   - `cfs_lib`: added `CMakeLists.txt`; fixed a pointer type error that stops the build with GCC 14.
@@ -46,7 +46,7 @@ cd build/exe/cpu1
 Startup should reach `CFE_ES_Main entering OPERATIONAL state`, and then the IMU example prints one line per second:
 
 ```
-IMU_APP: #1 accel [+0.071 -0.071 +1.000] g  gyro [-2.97 +0.31 +0.99] deg/s  temp 25.36 C
+IMU_APP: #1  x -0.074  y +0.068  z +1.002
 ```
 
 Run `core-cpu1` from `build/exe/cpu1`, because it loads the startup script and apps from `./cf`. Most timestamps read `1980-012-...` because the cFE clock has not been set; this is normal. Run only one cFS at a time on a computer (it uses UDP ports 1234 and 1235).
@@ -74,18 +74,18 @@ Parameters are added in order with `--u8`, `--u16`, `--u32`, `--i8`, `--i16`, `-
 
 ## IMU example
 
-IMU_APP reads a simulated IMU over a simulated I2C bus once per second, prints the values and sends them on the software bus, where DS stores them in a file:
+IMU_APP reads a simulated IMU once per second, prints the values and sends them on the software bus, where DS stores them in a file:
 
 ```
-SCH_LAB --wakeup (1 Hz)--> IMU_APP --SIM_I2C_Read(0x68, reg 0x3B, 14 bytes)--> sim_i2c
+SCH_LAB --wakeup (1 Hz)--> IMU_APP --SIM_IMU_Read(&x, &y, &z)--> sim_imu
                               |
                               +-- prints one line on the console
                               +-- IMU_APP_DATA_TLM_MID --> DS     --> build/exe/cpu1/cf/imuNNNNNNNN.dat
                                                        --> TO_LAB --> ground.py listen
 ```
 
-- `apps/sim_i2c`: a library that stands in for an I2C bus driver. The device at address 0x68 uses the MPU-6050 register map (WHO_AM_I, PWR_MGMT_1 with the sleep bit, 14 data registers). It runs inside cFS with integer arithmetic only, so it needs no hardware, network port or extra program.
-- `apps/imu_app`: made with `create_app.py`, then extended. At startup it checks WHO_AM_I and wakes the device; on each wakeup it reads, converts to g, deg/s and deg C, prints and publishes.
+- `apps/sim_imu`: a library that stands in for the IMU and its driver. `SIM_IMU_Read(&x, &y, &z)` returns three float values (acceleration in g): z is about 1.0, and x and y swing between -0.1 and +0.1 over 20 seconds, with a little noise. It runs inside cFS and needs no hardware, network port or extra program.
+- `apps/imu_app`: made with `create_app.py`, then extended. On each wakeup it calls `SIM_IMU_Read`, prints the values and publishes them.
 - `sample_defs/tables/ds_file_tbl.c`, `ds_filter_tbl.c`: DS stores every IMU data packet and starts a new file every minute. Numbering restarts at 1 when cFS starts, so files of the previous run are overwritten.
 
 | Message ID | Name | |
@@ -93,8 +93,8 @@ SCH_LAB --wakeup (1 Hz)--> IMU_APP --SIM_I2C_Read(0x68, reg 0x3B, 14 bytes)--> s
 | `0x18A0` | `IMU_APP_CMD_MID` | commands: 0 NOOP, 1 RESET_COUNTERS |
 | `0x18A1` | `IMU_APP_SEND_HK_MID` | housekeeping request (SCH_LAB, 4 s) |
 | `0x18A2` | `IMU_APP_WAKEUP_MID` | read the sensor (SCH_LAB, 1 s) |
-| `0x08A0` | `IMU_APP_HK_TLM_MID` | housekeeping: counters, device_ready, samples, i2c_errors |
-| `0x08A1` | `IMU_APP_DATA_TLM_MID` | sensor data: raw counts and converted values |
+| `0x08A0` | `IMU_APP_HK_TLM_MID` | housekeeping: command counters, sample count |
+| `0x08A1` | `IMU_APP_DATA_TLM_MID` | sensor data: sample count, x, y, z |
 
 To check what DS stored, read a file with `ground.py`. The lines match the console output of the same samples:
 
