@@ -21,17 +21,19 @@
 **  
 **
 ** Purpose:
-**   CFS Data Storage (DS) destination file table, shortened for the cFS
-**   hands-on course.
+**   CFS Data Storage (DS) destination file table for the IMU example
+**   of the cFS hands-on course.
 **
-**   Each entry describes one file that DS writes. Five entries are written
-**   out below and all of them are empty; the remaining entries up to
-**   DS_DEST_FILE_CNT are left out and are therefore empty as well.
-**   Fill in an entry (path, base name, extension, name type, enable state,
-**   size and age limits, first sequence number) to make DS write a file.
+**   Each entry describes one file that DS writes. Entry 0 stores the IMU
+**   measurements selected by ds_filter_tbl.c in /cf (build/exe/cpu1/cf on
+**   the PC) as imu00000001.dat, imu00000002.dat, ... and starts a new
+**   file every minute. Entries 1 to 4 are empty; the remaining entries up
+**   to DS_DEST_FILE_CNT are left out and are therefore empty as well.
 **
-**   DS updates the file age on each housekeeping request (DS_SEND_HK_MID),
-**   so the age limit only works while those requests arrive.
+**   DS updates the file age on each housekeeping request (every 4 seconds
+**   from SCH_LAB), so the age limit only works while those requests arrive.
+**   Numbering starts again at 1 every time cFS starts, so files of the
+**   previous run are overwritten.
 **
 *************************************************************************/
 
@@ -43,27 +45,32 @@
 #include "ds_msg.h"
 
 /*
+** File table index numbers, also used by ds_filter_tbl.c
+*/
+#define FILE_IMU_MEASUREMENTS   0
+
+/*
 ** Destination file table data
 */
 DS_DestFileTable_t DS_DestFileTable =
 {
-  /* .Descriptor = */ "Course file table",
+  /* .Descriptor = */ "IMU example file table",
   /* .File       = */
   {
-    /* File Index 00 -- unused */
+    /* File Index 00 -- IMU measurements */
     {
 #if (DS_MOVE_FILES == TRUE)
       /* .Movename      = */ DS_EMPTY_STRING,
 #endif
-      /* .Pathname      = */ DS_EMPTY_STRING,
-      /* .Basename      = */ DS_EMPTY_STRING,
-      /* .Extension     = */ DS_EMPTY_STRING,
+      /* .Pathname      = */ "/cf/",
+      /* .Basename      = */ "imu",
+      /* .Extension     = */ ".dat",
 
-      /* .FileNameType  = */ DS_UNUSED,
-      /* .EnableState   = */ DS_UNUSED,
-      /* .MaxFileSize   = */ DS_UNUSED,
-      /* .MaxFileAge    = */ DS_UNUSED,
-      /* .SequenceCount = */ DS_UNUSED,
+      /* .FileNameType  = */ DS_BY_COUNT,
+      /* .EnableState   = */ DS_ENABLED,
+      /* .MaxFileSize   = */ (1024 * 64),               /* 64 K-bytes */
+      /* .MaxFileAge    = */ 60,                        /* 1 minute */
+      /* .SequenceCount = */ 1,
     },
     /* File Index 01 -- unused */
     {

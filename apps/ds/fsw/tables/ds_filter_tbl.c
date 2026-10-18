@@ -21,16 +21,16 @@
 **  
 **
 ** Purpose:
-**   CFS Data Storage (DS) packet filter table, shortened for the cFS
-**   hands-on course.
+**   CFS Data Storage (DS) packet filter table for the IMU example of the
+**   cFS hands-on course.
 **
 **   DS subscribes to every message ID listed here. Each packet can go to
 **   up to 4 destination files (ds_file_tbl.c); each filter is
 **     { file table index, filter type, N, X, O }
 **   and stores N packets out of every X, starting at offset O, so
-**   { 0, DS_BY_COUNT, 1, 1, 0 } stores every packet in file 0.
+**   { FILE_IMU_MEASUREMENTS, DS_BY_COUNT, 1, 1, 0 } stores every packet.
 **
-**   Five entries are written out below and all of them are empty; the
+**   Entry 0 stores the IMU measurements. Entries 1 to 4 are empty; the
 **   remaining entries up to DS_PACKETS_IN_FILTER_TABLE are left out and
 **   are therefore empty as well.
 **
@@ -44,24 +44,30 @@
 #include "ds_msg.h"
 
 /*
-** Include the headers that define the message IDs of the packets to store
+** Message IDs of the packets to store
 */
+#include "imu_msgids.h"
+
+/*
+** File table index numbers, defined in ds_file_tbl.c
+*/
+#define FILE_IMU_MEASUREMENTS   0
 
 /*
 ** Packet filter table data
 */
 DS_FilterTable_t DS_FilterTable =
 {
-  /* .Descriptor = */ "Course filter table",
+  /* .Descriptor = */ "IMU example filter table",
   /* .Packet     = */
   {
-    /* Packet Index 000 -- unused */
+    /* Packet Index 000 -- IMU measurements */
     {
-      /* .MessageID = */ DS_UNUSED,
+      /* .MessageID = */ IMU_MEASUREMENTS_TLM_MID,
       /* .Filter    = */
       {
         /* File table index, filter type, N, X, O */
-        { DS_UNUSED, DS_UNUSED, DS_UNUSED, DS_UNUSED, DS_UNUSED },
+        { FILE_IMU_MEASUREMENTS, DS_BY_COUNT, 1, 1, 0 },
         { DS_UNUSED, DS_UNUSED, DS_UNUSED, DS_UNUSED, DS_UNUSED },
         { DS_UNUSED, DS_UNUSED, DS_UNUSED, DS_UNUSED, DS_UNUSED },
         { DS_UNUSED, DS_UNUSED, DS_UNUSED, DS_UNUSED, DS_UNUSED }
