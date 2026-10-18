@@ -39,6 +39,7 @@
 #include "to_lab_msgids.h"
 
 #include "sample_app_msgids.h"
+#include "imu_msgids.h"
 
 #if 0
 #include "sc_msgids.h"
@@ -85,6 +86,8 @@ SCH_LAB_ScheduleTable_t SCH_LAB_ScheduleTable[SCH_LAB_MAX_SCHEDULE_ENTRIES] =
      { CI_LAB_SEND_HK_MID,   4, 0 },
      { TO_LAB_SEND_HK_MID,   4, 0 },
      { SAMPLE_APP_SEND_HK_MID,   4, 0 },
+     { IMU_WAKEUP_MID,       1, 0 },  /* read the IMU every second */
+     { IMU_SEND_HK_MID,      4, 0 },
 
 #if 0
      { SC_SEND_HK_MID,       4, 0 },

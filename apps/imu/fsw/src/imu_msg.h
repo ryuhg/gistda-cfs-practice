@@ -61,4 +61,19 @@ typedef struct
 
 #define IMU_HK_TLM_LNGTH   sizeof ( imu_hk_tlm_t )
 
+/*************************************************************************/
+/*
+** Type definition (IMU measurements, one packet per reading)
+*/
+typedef struct
+{
+    uint8              TlmHeader[CFE_SB_TLM_HDR_SIZE];
+    float              x;                  /* IMU values from SIM_IMU_Read */
+    float              y;
+    float              z;
+
+}   imu_measurements_tlm_t  ;
+
+#define IMU_MEASUREMENTS_TLM_LNGTH   sizeof ( imu_measurements_tlm_t )
+
 #endif /* _imu_msg_h_ */

@@ -49,6 +49,7 @@ void IMU_ProcessCommandPacket(void);
 void IMU_ProcessGroundCommand(void);
 void IMU_ReportHousekeeping(void);
 void IMU_ResetCounters(void);
+void IMU_ReadSensor(void);
 
 bool IMU_VerifyCmdLength(CFE_SB_MsgPtr_t msg, uint16 ExpectedLength);
 

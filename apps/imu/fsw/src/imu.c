@@ -21,7 +21,9 @@
 ** File: imu.c
 **
 ** Purpose:
-**   This file contains the source code for the IMU App.
+**   This file contains the source code for the IMU App. It reads the
+**   simulated IMU (sim_imu library) once per second, prints the x, y and z
+**   values and publishes them on the software bus, where DS stores them.
 **
 *******************************************************************************/
 
@@ -36,11 +38,14 @@
 #include "imu_events.h"
 #include "imu_version.h"
 
+#include "sim_imu.h"
+
 /*
 ** global data
 */
 
 imu_hk_tlm_t  IMU_HkTelemetryPkt;
+imu_measurements_tlm_t  IMU_MeasurementsPkt;
 CFE_SB_PipeId_t  IMU_CommandPipe;
 CFE_SB_MsgPtr_t  IMU_MsgPtr;
 
@@ -106,12 +111,13 @@ void IMU_Init(void)
                      CFE_EVS_EventFilter_BINARY);
 
     /*
-    ** Create the Software Bus command pipe and subscribe to the command
-    ** and housekeeping request messages
+    ** Create the Software Bus command pipe and subscribe to the command,
+    ** housekeeping request and wakeup messages
     */
     CFE_SB_CreatePipe(&IMU_CommandPipe, IMU_PIPE_DEPTH, "IMU_PIPE");
     CFE_SB_Subscribe(IMU_CMD_MID, IMU_CommandPipe);
     CFE_SB_Subscribe(IMU_SEND_HK_MID, IMU_CommandPipe);
+    CFE_SB_Subscribe(IMU_WAKEUP_MID, IMU_CommandPipe);
 
     /*
     ** Initialize the housekeeping packet (this also clears the counters)
@@ -119,6 +125,10 @@ void IMU_Init(void)
     CFE_SB_InitMsg(&IMU_HkTelemetryPkt,
                    IMU_HK_TLM_MID,
                    IMU_HK_TLM_LNGTH, true);
+
+    CFE_SB_InitMsg(&IMU_MeasurementsPkt,
+                   IMU_MEASUREMENTS_TLM_MID,
+                   IMU_MEASUREMENTS_TLM_LNGTH, true);
 
     CFE_EVS_SendEvent(IMU_STARTUP_INF_EID, CFE_EVS_EventType_INFORMATION,
                       "IMU App Initialized. Version %d.%d.%d.%d",
@@ -146,6 +156,10 @@ void IMU_ProcessCommandPacket(void)
 
         case IMU_SEND_HK_MID:
             IMU_ReportHousekeeping();
+            break;
+
+        case IMU_WAKEUP_MID:
+            IMU_ReadSensor();
             break;
 
         default:
@@ -221,6 +235,36 @@ void IMU_ResetCounters(void)
                       "IMU: RESET command");
 
 } /* End of IMU_ResetCounters() */
+
+/*
+** IMU_ReadSensor() -- read the IMU once, print it and send it on the bus
+**
+** Called on every wakeup message. The data packet goes on the software
+** bus, where DS stores it in a file.
+*/
+void IMU_ReadSensor(void)
+{
+    float X;
+    float Y;
+    float Z;
+
+    if (SIM_IMU_Read(&X, &Y, &Z) != SIM_IMU_SUCCESS)
+    {
+        CFE_EVS_SendEvent(IMU_READ_ERR_EID, CFE_EVS_EventType_ERROR,
+                          "IMU: IMU read failed");
+        return;
+    }
+
+    IMU_MeasurementsPkt.x = X;
+    IMU_MeasurementsPkt.y = Y;
+    IMU_MeasurementsPkt.z = Z;
+
+    OS_printf("IMU: x %+.3f  y %+.3f  z %+.3f\n", X, Y, Z);
+
+    CFE_SB_TimeStampMsg((CFE_SB_Msg_t *) &IMU_MeasurementsPkt);
+    CFE_SB_SendMsg((CFE_SB_Msg_t *) &IMU_MeasurementsPkt);
+
+} /* End of IMU_ReadSensor() */
 
 /*
 ** IMU_VerifyCmdLength() -- verify command packet length
