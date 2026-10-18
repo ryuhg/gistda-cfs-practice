@@ -2,66 +2,112 @@
 
 This repository is a training fork of the NASA [cFS bundle](https://github.com/nasa/cFS) at release **Aquila (cFS 6.7.0a)**. It is used for the hands-on exercises of a cFS introductory course. Aquila was chosen over later releases (Caelum, Draco) because its configuration is simpler for first-time users.
 
-The framework is the same as the upstream tag `v6.7.0a`: cFE, OSAL, PSP, the lab apps and the tools are git submodules that point to the NASA repositories, and the build files (`Makefile`, `sample_defs/`) are not included. Setting them up is part of the exercise: follow the **Setup** and **Build and Run** sections of the upstream README below, but clone this repository instead of `nasa/cFS`:
+**This is the `cheat-sheet` branch:** the state after all exercises are done. Trainees start from the `main` branch, which has the upstream submodules, no build setup and no `apps/imu`. Each exercise step is one commit on top of `main`, so
 
 ```sh
-git clone https://github.com/ryuhg/gistda-cfs-practice.git
-cd gistda-cfs-practice
+git log --reverse --oneline origin/main..origin/cheat-sheet   # the steps, in order
+git show <commit>                                             # the solution of one step
 ```
 
-## Course materials
+## Differences from upstream
 
-These are added to the upstream bundle. They are plain directories and files (not submodules), so they are there right after `git clone`. The apps and libraries under `apps/` are not built until you add them to the mission configuration (`sample_defs/`).
+- **No submodules.** All components are stored as plain directories, so a normal `git clone` is enough:
 
-| Path | What it is |
-|---|---|
-| `create_app.py` | Creates a new app from the sample_app layout (see below) |
-| `ground.py` | Sends commands, shows telemetry, reads files written by DS (see below) |
-| `apps/sim_imu` | Simulated IMU library: the "sensor and driver" for the exercises (see below) |
-| `apps/ds` | Data Store app 2.5.2 from [nasa/DS](https://github.com/nasa/DS), without `docs/`, `test_and_ground/` and unit tests. The destination file and packet filter tables in `fsw/tables/` are shortened to five empty entries each. |
-| `apps/cfs_lib` | cFS library 2.2.0 from [nasa/cfs_lib](https://github.com/nasa/cfs_lib) (NASA Open Source Agreement), needed by DS. Added a `CMakeLists.txt` and fixed a pointer type error that stops the build with GCC 14. |
+  | Directory | Version | Upstream |
+  |---|---|---|
+  | `cfe` | 6.7.0 | [nasa/cFE](https://github.com/nasa/cFE) |
+  | `osal` | 5.0.0 | [nasa/osal](https://github.com/nasa/osal) |
+  | `psp` | 1.4.0 | [nasa/PSP](https://github.com/nasa/PSP) |
+  | `apps/ci_lab`, `apps/to_lab`, `apps/sch_lab` | 2.3.0 | [nasa/ci_lab](https://github.com/nasa/ci_lab), [nasa/to_lab](https://github.com/nasa/to_lab), [nasa/sch_lab](https://github.com/nasa/sch_lab) |
+  | `apps/sample_app`, `apps/sample_lib` | 1.1.0 | [nasa/sample_app](https://github.com/nasa/sample_app), [nasa/sample_lib](https://github.com/nasa/sample_lib) |
+  | `apps/ds` | 2.5.2 | [nasa/DS](https://github.com/nasa/DS) (without `docs/`, `test_and_ground/`, unit tests) |
+  | `apps/cfs_lib` | 2.2.0 | [nasa/cfs_lib](https://github.com/nasa/cfs_lib) (NASA Open Source Agreement) |
+  | `tools/cFS-GroundSystem` | 2.1.0 | [nasa/cFS-GroundSystem](https://github.com/nasa/cFS-GroundSystem) |
+  | `tools/elf2cfetbl` | 3.1.0 | [nasa/elf2cfetbl](https://github.com/nasa/elf2cfetbl) |
+  | `tools/tblCRCTool` | 1.1.0 | [nasa/tblCRCTool](https://github.com/nasa/tblCRCTool) |
 
-cFE, OSAL and PSP are not changed.
+- **Setup already done.** `Makefile` and `sample_defs/` are already copied to the top level as described in the upstream *Setup* section below, and `OSAL_DEBUG_PERMISSIVE_MODE` is defined so cFS runs without `sudo`.
+- **Added for the course:** `create_app.py`, `ground.py`, `apps/sim_imu` and `apps/imu` (see below).
+- **cFE, OSAL and PSP are unchanged** from the upstream release.
+- **Changes to other upstream code** (see `git log` for details):
+  - `cfs_lib`: added `CMakeLists.txt`; fixed a pointer type error that stops the build with GCC 14.
+  - `ds`: the destination file and packet filter tables in `fsw/tables/` are rewritten for the IMU example (5 readable entries each instead of the long samples), plus an include path for the IMU message IDs.
+  - `sch_lab`: include path and schedule for the IMU example.
 
-## Notes for this course
+## Quick start
 
-- Tested on Ubuntu 24.04 as a normal user, with GCC 13.3 and GCC 14.2 (CMake 3.28). Required packages: `sudo apt install build-essential cmake git python3`.
-- After `git clone`, the directories `cfe/`, `osal/`, `psp/`, `apps/ci_lab`, `apps/sample_app`, `apps/sample_lib`, `apps/sch_lab`, `apps/to_lab` and `tools/*` are empty until you run `git submodule init` and `git submodule update`.
-- If you run cFS as a normal user (not root), do the `OSAL_DEBUG_PERMISSIVE_MODE` step of the Setup section. Without it, `core-cpu1` exits right after starting with `CFE_PSP: OS_API_Init() failure`.
-- Run `core-cpu1` from `build/exe/cpu1`, because it loads the startup script and apps from `./cf`. Stop it with Ctrl+C. Run only one cFS at a time on a computer (it uses UDP ports 1234 and 1235).
-- The build prints a few `-Waddress-of-packed-member` warnings in `sample_app` and `ci_lab`. These upstream apps declare their housekeeping packets with `OS_PACK` (packed), and GCC 9 and later warn when such a packet is passed as a `CFE_SB_Msg_t *`. The warnings are expected and harmless on a PC. Apps made with `create_app.py` do not pack their packets, like the cFE core.
-- Most timestamps on the console read `1980-012-...` because the cFE clock has not been set. This is normal.
+Tested on Ubuntu 24.04 as a normal user, with GCC 13.3 and GCC 14.2 (CMake 3.28).
 
-## Simulated IMU: apps/sim_imu
+```sh
+sudo apt install build-essential cmake git python3
 
-A cFE library that stands in for an IMU and its driver, so the exercises can read a sensor on any computer. It runs inside cFS and needs no hardware, network port or extra program.
+git clone -b cheat-sheet https://github.com/ryuhg/gistda-cfs-practice.git
+cd gistda-cfs-practice
+make prep
+make
+make install
 
-| | |
-|---|---|
-| Library name | `sim_imu` (module `sim_imu.so`) |
-| Entry point | `int32 SIM_IMU_LibInit(void)`, prints `SIM_IMU Lib Initialized` |
-| Header | `apps/sim_imu/fsw/public_inc/sim_imu.h` |
-| Read | `int32 SIM_IMU_Read(float *X, float *Y, float *Z)`, returns `SIM_IMU_SUCCESS` or `SIM_IMU_ERROR` |
+cd build/exe/cpu1
+./core-cpu1          # stop with Ctrl+C
+```
 
-Each read returns three float values, acceleration in g, for a board lying flat and slowly wobbling: z is about 1.0, and x and y swing between -0.1 and +0.1 over 20 seconds, with a little noise.
+Startup should reach `CFE_ES_Main entering OPERATIONAL state`, and then the IMU example prints one line per second:
+
+```
+IMU: x +0.097  y -0.013  z +1.002
+```
+
+Run `core-cpu1` from `build/exe/cpu1`, because it loads the startup script and apps from `./cf`. Most timestamps read `1980-012-...` because the cFE clock has not been set; this is normal. Run only one cFS at a time on a computer (it uses UDP ports 1234 and 1235).
 
 ## Ground tool: ground.py
 
-`ground.py` sends commands, shows telemetry and reads DS files. It needs only Python 3 (no extra packages, tested with 3.8 to 3.13 on Linux) and uses nothing Linux-specific, so it can also run on a Windows or macOS host. With `core-cpu1` running, open a second terminal in the repository:
+`ground.py` sends commands and shows telemetry. It needs only Python 3 (no extra packages, tested with 3.8 to 3.13 on Linux) and uses nothing Linux-specific, so it can also run on a Windows or macOS host. Open a second terminal in the repository:
 
 ```sh
-python3 ground.py send 0x1882 0                         # SAMPLE_APP NOOP: the console prints "SAMPLE: NOOP command"
-python3 ground.py dump build/exe/cpu1/cf/<file>         # print the packets in a file written by DS
-python3 ground.py listen                                # show telemetry sent by TO_LAB (Ctrl+C to stop)
+python3 ground.py listen                       # show telemetry (Ctrl+C to stop)
+python3 ground.py listen --only IMU EVENT      # only lines containing these words
 ```
 
-`send` takes a message ID and a command code. Parameters are added in order with `--u8`, `--u16`, `--u32`, `--i8`, `--i16`, `--i32`, `--f32` and `--string LEN:TEXT`. If cFS runs on another computer, add `--host <its IP address>`.
+`listen` asks TO_LAB to start sending telemetry, and repeats this every 5 seconds while nothing arrives, so it does not matter whether cFS or `ground.py` starts first. Events are shown with their text, for example `EVENT INFO IMU 3: IMU: NOOP command`.
 
-`dump` prints the file headers, then one line per stored packet with its cFE time stamp.
+In a third terminal, send commands with a message ID and a command code:
 
-`listen` asks TO_LAB to start sending telemetry, and repeats this every 5 seconds while nothing arrives, so it does not matter whether cFS or `ground.py` starts first. It shows only the packets that TO_LAB is configured to send.
+```sh
+python3 ground.py send 0x1882 0                         # SAMPLE_APP NOOP
+python3 ground.py send 0x18C0 0                         # IMU NOOP
+python3 ground.py send 0x18C0 1                         # IMU RESET_COUNTERS
+```
 
-Run `python3 ground.py <command> --help` for all options.
+Parameters are added in order with `--u8`, `--u16`, `--u32`, `--i8`, `--i16`, `--i32`, `--f32` and `--string LEN:TEXT`. If cFS runs on another computer, add `--host <its IP address>` to every command.
+
+## IMU example
+
+The IMU app reads a simulated IMU once per second, prints the values and sends them on the software bus, where DS stores them in a file:
+
+```
+SCH_LAB --wakeup (1 Hz)--> IMU --SIM_IMU_Read(&x, &y, &z)--> sim_imu
+                            |
+                            +-- prints one line on the console
+                            +-- IMU_MEASUREMENTS_TLM_MID --> DS --> build/exe/cpu1/cf/imuNNNNNNNN.dat
+```
+
+- `apps/sim_imu`: a library that stands in for the IMU and its driver. `SIM_IMU_Read(&x, &y, &z)` returns three float values (acceleration in g): z is about 1.0, and x and y swing between -0.1 and +0.1 over 20 seconds, with a little noise. It runs inside cFS and needs no hardware, network port or extra program.
+- `apps/imu`: made with `create_app.py imu`, then extended. On each wakeup it calls `SIM_IMU_Read`, prints the values and publishes them.
+- `apps/ds/fsw/tables/ds_file_tbl.c`, `ds_filter_tbl.c`: entry 0 of each table makes DS store every IMU measurements packet and start a new file every minute; entries 1 to 4 are empty. Numbering restarts at 1 when cFS starts, so files of the previous run are overwritten.
+
+| Message ID | Name | |
+|---|---|---|
+| `0x18C0` | `IMU_CMD_MID` | commands: 0 NOOP, 1 RESET_COUNTERS |
+| `0x18C1` | `IMU_SEND_HK_MID` | housekeeping request (SCH_LAB, 4 s) |
+| `0x18C2` | `IMU_WAKEUP_MID` | read the sensor (SCH_LAB, 1 s) |
+| `0x08C0` | `IMU_HK_TLM_MID` | housekeeping: command counters |
+| `0x08C1` | `IMU_MEASUREMENTS_TLM_MID` | measurements: x, y, z (`imu_measurements_tlm_t`) |
+
+To check what DS stored, read a file with `ground.py`. The lines match the console output of the same samples:
+
+```sh
+python3 ground.py dump build/exe/cpu1/cf/imu00000001.dat
+```
 
 ## Creating a new app: create_app.py
 
@@ -69,13 +115,14 @@ Run `python3 ground.py <command> --help` for all options.
 python3 create_app.py hello_world
 ```
 
-creates `apps/hello_world/` from the sample_app layout (command pipe, NOOP and RESET_COUNTERS commands, housekeeping; no tables), with message IDs that do not collide with other apps. It then prints the remaining steps: adding the app to `sample_defs/targets.cmake` and `sample_defs/cpu1_cfe_es_startup.scr`, and optionally to SCH_LAB and TO_LAB for housekeeping.
+creates `apps/hello_world/` from the sample_app layout (command pipe, NOOP and RESET_COUNTERS, housekeeping; no tables), with message IDs that do not collide with other apps. It then prints the remaining steps: adding the app to `sample_defs/targets.cmake` and `sample_defs/cpu1_cfe_es_startup.scr`, and optionally to SCH_LAB and TO_LAB for housekeeping.
 
 ## Known limitations
 
-- `tools/cFS-GroundSystem` (v2.1.0) needs Python 2 and PyQt4, which are not packaged for Ubuntu 20.04 or later, so the GUI ground system will not start there. Use `ground.py` instead.
-- If you use `cmdUtil` from cFS-GroundSystem, `--endian=LE` must come before `--cmdcode` on x86 PCs; otherwise the command code is written to the wrong byte and every command arrives as NOOP. For the same reason the bundled `to-enable-tlm.sh` sends a NOOP instead of enabling telemetry.
-- The ES "restart app" command (`CFE_ES_RESTART_APP_CC`) does not restart apps that use the sample_app main loop (SAMPLE_APP, the lab apps and apps made with `create_app.py`): ES deletes the app and logs `Exit Application ... on Error Completed`. This is a bug in cFE 6.7, fixed in later cFE releases, and is not patched here.
+- `tools/cFS-GroundSystem` (v2.1.0) needs Python 2 and PyQt4, which are not packaged for Ubuntu 20.04 or later. Use `ground.py` instead.
+- If you use `cmdUtil` from cFS-GroundSystem, `--endian=LE` must come before `--cmdcode` on x86 PCs; otherwise every command arrives as NOOP.
+- The build prints `-Waddress-of-packed-member` warnings in `sample_app` and `ci_lab`. These upstream apps declare their housekeeping packets with `OS_PACK` (packed), and GCC 9 and later warn when such a packet is passed as a `CFE_SB_Msg_t *`. The warnings are expected and harmless on a PC. `imu` and other apps made with `create_app.py` do not pack their packets, like the cFE core.
+- The ES "restart app" command (`CFE_ES_RESTART_APP_CC`) does not restart apps that use the sample_app main loop (SAMPLE_APP, the lab apps, IMU and apps made with `create_app.py`): ES deletes the app and logs `Exit Application ... on Error Completed`. This is a bug in cFE 6.7, fixed in later cFE releases, and is not patched here.
 
 ---
 
