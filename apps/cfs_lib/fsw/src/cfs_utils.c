@@ -231,6 +231,7 @@ boolean CFS_ResolveSymAddr(CFS_SymAddr_t *SymAddr,
 {
     boolean   Valid;   
     int32     OS_Status = OS_SUCCESS;
+    cpuaddr   SymbolAddr;
     
    /* 
    ** NUL terminate the very end of the symbol name string array as a
@@ -253,10 +254,12 @@ boolean CFS_ResolveSymAddr(CFS_SymAddr_t *SymAddr,
        ** If symbol name is not an empty string look it up 
        ** using the OSAL API and add the offset if it succeeds
        */
-       OS_Status = OS_SymbolLookup(ResolvedAddr, SymAddr->SymName);
+       /* OS_SymbolLookup returns a cpuaddr, which is 64 bits wide on
+       ** 64-bit hosts, so it must not write into the uint32 directly */
+       OS_Status = OS_SymbolLookup(&SymbolAddr, SymAddr->SymName);
        if (OS_Status == OS_SUCCESS)
         {
-          *ResolvedAddr += SymAddr->Offset;
+          *ResolvedAddr = (uint32)SymbolAddr + SymAddr->Offset;
           Valid = TRUE;
         }       
        else
