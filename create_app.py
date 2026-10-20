@@ -188,6 +188,9 @@ typedef struct
 /*************************************************************************/
 /*
 ** Type definition (@APP@ App housekeeping)
+**
+** Not packed (no OS_PACK), like the cFE core packets: order the fields so
+** that the compiler needs no padding between them.
 */
 typedef struct
 {
@@ -196,7 +199,7 @@ typedef struct
     uint8              command_count;
     uint8              spare[2];
 
-}   OS_PACK @app@_hk_tlm_t  ;
+}   @app@_hk_tlm_t  ;
 
 #define @APP@_HK_TLM_LNGTH   sizeof ( @app@_hk_tlm_t )
 

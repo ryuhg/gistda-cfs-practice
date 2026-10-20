@@ -29,7 +29,7 @@ cFE, OSAL and PSP are not changed.
 - After `git clone`, the directories `cfe/`, `osal/`, `psp/`, `apps/ci_lab`, `apps/sample_app`, `apps/sample_lib`, `apps/sch_lab`, `apps/to_lab` and `tools/*` are empty until you run `git submodule init` and `git submodule update`.
 - If you run cFS as a normal user (not root), do the `OSAL_DEBUG_PERMISSIVE_MODE` step of the Setup section. Without it, `core-cpu1` exits right after starting with `CFE_PSP: OS_API_Init() failure`.
 - Run `core-cpu1` from `build/exe/cpu1`, because it loads the startup script and apps from `./cf`. Stop it with Ctrl+C. Run only one cFS at a time on a computer (it uses UDP ports 1234 and 1235).
-- The build prints a few `-Waddress-of-packed-member` warnings for apps that send packed telemetry (sample_app, ci_lab and apps made with `create_app.py`). These are expected and harmless.
+- The build prints a few `-Waddress-of-packed-member` warnings in `sample_app` and `ci_lab`. These upstream apps declare their housekeeping packets with `OS_PACK` (packed), and GCC 9 and later warn when such a packet is passed as a `CFE_SB_Msg_t *`. The warnings are expected and harmless on a PC. Apps made with `create_app.py` do not pack their packets, like the cFE core.
 - Most timestamps on the console read `1980-012-...` because the cFE clock has not been set. This is normal.
 
 ## Simulated IMU: apps/sim_imu
